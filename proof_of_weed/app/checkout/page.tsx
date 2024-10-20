@@ -66,14 +66,14 @@ function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, 
 
     try {
       // Check if MetaMask is installed and connected
-      if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
+      if (typeof window !== 'undefined' && 'ethereum' in window) {
         const provider = new BrowserProvider(window.ethereum as any)
         const signer = await provider.getSigner()
         const userAddress = await signer.getAddress()
 
         // Check if user has enough balance
         const balance = await provider.getBalance(userAddress)
-        if (balance.lt(ethers.parseEther(usdcAmount.toString()))) {
+        if (balance < ethers.parseEther(usdcAmount.toString())) {
           throw new Error('Insufficient balance')
         }
 
