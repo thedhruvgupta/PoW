@@ -20,7 +20,7 @@ export default function WeedHavenApp() {
   const [selectedDispensary, setSelectedDispensary] = useState<Dispensary | null>(null)
   const [cart, setCart] = useState<Product[]>([])
   const [user, setUser] = useState<User>({ address: null, balance: null, flowBalance: null })
-  const [wallet, setWallet] = useState<ethers.BrowserProvider | null>(null)
+  const [, setWallet] = useState<ethers.BrowserProvider | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const router = useRouter()
 
@@ -29,7 +29,7 @@ export default function WeedHavenApp() {
       if (typeof window !== 'undefined' && 'ethereum' in window) {
         const ethereum = (window as EthereumWindow).ethereum;
         if (ethereum) {
-          const provider = new ethers.BrowserProvider(ethereum as any);
+          const provider = new ethers.BrowserProvider(ethereum);
           const accounts = await ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
             setWallet(provider);
@@ -57,7 +57,7 @@ export default function WeedHavenApp() {
         const ethereum = (window as EthereumWindow).ethereum;
         if (ethereum) {
           await ethereum.request({ method: 'eth_requestAccounts' })
-          const provider = new ethers.BrowserProvider(ethereum as any)
+          const provider = new ethers.BrowserProvider(ethereum)
           setWallet(provider)
           const signer = await provider.getSigner()
           const address = await signer.getAddress()

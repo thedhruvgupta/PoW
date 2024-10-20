@@ -22,7 +22,7 @@ async function getUSDCPrice(usdAmount: number): Promise<number> {
 }
 
 // Mock function for Circle API (replace with actual API call later)
-async function createCirclePayment(amount: number, destinationAddress: string): Promise<PaymentResult> {
+async function createCirclePayment(_amount: number, _destinationAddress: string): Promise<PaymentResult> {
   await new Promise(resolve => setTimeout(resolve, 1000))
   return { 
     success: true,
@@ -65,6 +65,8 @@ function StripeCheckoutForm({ totalAmount }: { totalAmount: number }) {
         alert('Payment successful!');
         setIsProcessing(false);
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _ = paymentMethod; // Acknowledge the unused variable
     }
   };
 
@@ -115,7 +117,7 @@ function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, 
     try {
       // Check if MetaMask is installed and connected
       if (typeof window !== 'undefined' && 'ethereum' in window) {
-        const provider = new BrowserProvider(window.ethereum as any)
+        const provider = new BrowserProvider(window.ethereum)
         const signer = await provider.getSigner()
         const userAddress = await signer.getAddress()
 
