@@ -22,8 +22,10 @@ async function getUSDCPrice(usdAmount: number): Promise<number> {
 }
 
 // Mock function for Circle API (replace with actual API call later)
-async function createCirclePayment(_amount: number, _destinationAddress: string): Promise<PaymentResult> {
+async function createCirclePayment(amount: number, destinationAddress: string): Promise<PaymentResult> {
+  // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 1000))
+  console.log(`Processing payment of ${amount} to ${destinationAddress}`);
   return { 
     success: true,
     message: 'Payment processed successfully',
