@@ -5,9 +5,8 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { ethers } from 'ethers'
+import { ethers, BrowserProvider } from 'ethers'
 import { Dispensary, PaymentResult } from '../types'
-import { BrowserProvider } from 'ethers'
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -30,6 +29,15 @@ async function createCirclePayment(amount: number, destinationAddress: string): 
     success: true,
     message: 'Payment processed successfully',
     transactionHash: '0x' + Math.random().toString(36).substr(2, 32)
+  }
+}
+
+// Add this at the top of your file, outside of any functions
+declare global {
+  interface Window {
+    ethereum?: {
+      request: (args: { method: string }) => Promise<string[]>;
+    };
   }
 }
 
@@ -118,45 +126,45 @@ function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, 
 
     try {
       // Check if MetaMask is installed and connected
-      if (typeof window !== 'undefined' && 'ethereum' in window) {
-        const provider = new BrowserProvider(window.ethereum as any)
-        const signer = await provider.getSigner()
-        const userAddress = await signer.getAddress()
+      if (typeof window !== 'undefined' && window.ethereum) {
+        const provider = new BrowserProvider(window.ethereum);
+        const signer = await provider.getSigner();
+        const userAddress = await signer.getAddress();
 
         // Check if user has enough balance
-        const balance = await provider.getBalance(userAddress)
+        const balance = await provider.getBalance(userAddress);
         if (balance < ethers.parseEther(usdcAmount.toString())) {
-          throw new Error('Insufficient balance')
+          throw new Error('Insufficient balance');
         }
 
         // Send transaction
         const tx = await signer.sendTransaction({
           to: dispensary.evmAddress,
           value: ethers.parseEther(usdcAmount.toString())
-        })
+        });
 
         // Wait for transaction to be mined
-        await tx.wait()
+        await tx.wait();
 
         // Process payment through Circle
-        const circlePayment = await createCirclePayment(usdcAmount, dispensary.evmAddress)
+        const circlePayment = await createCirclePayment(usdcAmount, dispensary.evmAddress);
 
         if (circlePayment.success) {
           // Update dispensary balance
-          dispensary.balance += usdcAmount
-          router.push(`/confirmation?dispensaryId=${dispensary.id}&amount=${usdcAmount}&txHash=${circlePayment.transactionHash}`)
+          dispensary.balance += usdcAmount;
+          router.push(`/confirmation?dispensaryId=${dispensary.id}&amount=${usdcAmount}&txHash=${circlePayment.transactionHash}`);
         } else {
-          throw new Error(circlePayment.message)
+          throw new Error(circlePayment.message);
         }
       } else {
-        throw new Error('MetaMask is not installed')
+        throw new Error('MetaMask is not installed');
       }
     } catch (error) {
-      console.error('Crypto payment failed:', error)
-      setErrorMessage(`Crypto payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      console.error('Crypto payment failed:', error);
+      setErrorMessage(`Crypto payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
-    setIsLoading(false)
+    setIsLoading(false);
   }
 
   return (
