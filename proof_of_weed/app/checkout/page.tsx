@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements } from '@stripe/react-stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { ethers } from 'ethers'
 import { Dispensary, PaymentResult } from '../types'
 import { BrowserProvider } from 'ethers'
@@ -32,7 +32,55 @@ async function createCirclePayment(amount: number, destinationAddress: string): 
 }
 
 function StripeCheckoutForm({ totalAmount }: { totalAmount: number }) {
-  // ... (keep the existing StripeCheckoutForm implementation)
+  const stripe = useStripe();
+  const elements = useElements();
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    setIsProcessing(true);
+    setPaymentError(null);
+
+    const cardElement = elements.getElement(CardElement);
+
+    if (cardElement) {
+      const { error, paymentMethod } = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+      });
+
+      if (error) {
+        setPaymentError(error.message || 'An error occurred');
+        setIsProcessing(false);
+      } else {
+        // Here you would typically send the paymentMethod.id to your server
+        // to complete the payment. For this example, we'll just simulate a successful payment.
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        alert('Payment successful!');
+        setIsProcessing(false);
+      }
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <CardElement />
+      {paymentError && <div className="text-red-500 mt-2">{paymentError}</div>}
+      <button
+        type="submit"
+        disabled={!stripe || isProcessing}
+        className="mt-4 w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors disabled:bg-gray-400"
+      >
+        {isProcessing ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
+      </button>
+    </form>
+  );
 }
 
 function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, dispensary: Dispensary }) {
