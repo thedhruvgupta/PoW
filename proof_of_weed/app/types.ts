@@ -17,4 +17,11 @@ export type Product = {
 export type User = {
   address: string | null
   balance: string | null
+  flowBalance: string | null
+}
+
+export type PaymentResult = {
+  success: boolean
+  message: string
+  transactionHash?: string
 }

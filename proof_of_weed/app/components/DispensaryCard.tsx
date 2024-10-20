@@ -1,5 +1,5 @@
 import Image from 'next/image'
-import { Dispensary } from '../types/dispensary'
+import { Dispensary } from '../types'
 
 interface DispensaryCardProps {
   dispensary: Dispensary
@@ -13,6 +13,8 @@ export default function DispensaryCard({ dispensary, onSelect }: DispensaryCardP
       <h3 className="text-xl font-semibold">{dispensary.name}</h3>
       <p>{dispensary.address}</p>
       <p>Rating: {dispensary.rating}/5</p>
+      <p>Wallet Address: {dispensary.evmAddress.slice(0, 6)}...{dispensary.evmAddress.slice(-4)}</p>
+      <p>Balance: {dispensary.balance} USDC</p>
       <button 
         onClick={() => onSelect(dispensary)}
         className="mt-2 bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 transition-colors"

@@ -19,7 +19,7 @@ type EthereumWindow = Window & typeof globalThis & {
 export default function WeedHavenApp() {
   const [selectedDispensary, setSelectedDispensary] = useState<Dispensary | null>(null)
   const [cart, setCart] = useState<Product[]>([])
-  const [user, setUser] = useState<User>({ address: null, balance: null })
+  const [user, setUser] = useState<User>({ address: null, balance: null, flowBalance: null })
   const [wallet, setWallet] = useState<ethers.BrowserProvider | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const router = useRouter()
@@ -36,9 +36,12 @@ export default function WeedHavenApp() {
             const signer = await provider.getSigner();
             const address = await signer.getAddress();
             const balance = await provider.getBalance(address);
+            // Mock Flow balance for now
+            const flowBalance = ethers.parseEther((Math.random() * 100).toFixed(2));
             setUser({
               address: address,
-              balance: `${ethers.formatEther(balance)} ETH`
+              balance: `${ethers.formatEther(balance)} ETH`,
+              flowBalance: `${ethers.formatEther(flowBalance)} FLOW`
             })
           }
         }
@@ -59,9 +62,12 @@ export default function WeedHavenApp() {
           const signer = await provider.getSigner()
           const address = await signer.getAddress()
           const balance = await provider.getBalance(address)
+          // Mock Flow balance for now
+          const flowBalance = ethers.parseEther((Math.random() * 100).toFixed(2));
           setUser({
             address: address,
-            balance: `${ethers.formatEther(balance)} ETH`
+            balance: `${ethers.formatEther(balance)} ETH`,
+            flowBalance: `${ethers.formatEther(flowBalance)} FLOW`
           })
         }
       } catch (error) {
@@ -75,7 +81,7 @@ export default function WeedHavenApp() {
   }
 
   const disconnectWallet = () => {
-    setUser({ address: null, balance: null })
+    setUser({ address: null, balance: null, flowBalance: null })
     setWallet(null)
   }
 

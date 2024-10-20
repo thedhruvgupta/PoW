@@ -17,7 +17,8 @@ export default function Header({ user, isConnecting, connectWallet, disconnectWa
             <span className="mr-4">
               Address: {user.address.slice(0, 6)}...{user.address.slice(-4)}
             </span>
-            <span className="mr-4">Balance: {user.balance}</span>
+            <span className="mr-4">ETH Balance: {user.balance}</span>
+            <span className="mr-4">FLOW Balance: {user.flowBalance}</span>
             <button
               onClick={disconnectWallet}
               className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"

@@ -3,8 +3,13 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import Image from 'next/image'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
+import { ethers } from 'ethers'
+import { Dispensary, PaymentResult } from '../types'
 
 // Initialize Stripe
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
@@ -12,100 +17,25 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 // Types
 type PaymentMethod = 'stripe' | 'crypto'
 
-interface CirclePaymentResponse {
-  id: string;
-  amount: number;
-  destinationAddress: string;
-  // Add other properties as per the actual API response
-}
-
-// Mock function for Circle API (replace with actual API call later)
-async function createCirclePayment(amount: number, destinationAddress: string): Promise<CirclePaymentResponse> {
-  // Simulate API call
-  await new Promise(resolve => setTimeout(resolve, 1000))
-  return { 
-    id: 'circle_payment_' + Math.random().toString(36).substr(2, 9),
-    amount,
-    destinationAddress
-  }
-}
-
 // Mock function to get USDC price (replace with actual API call later)
 async function getUSDCPrice(usdAmount: number): Promise<number> {
-  // Simulate API call
   await new Promise(resolve => setTimeout(resolve, 500))
-  // For this example, we'll assume 1 USD = 1 USDC
   return usdAmount
 }
 
-function StripeCheckoutForm({ totalAmount }: { totalAmount: number }) {
-  const stripe = useStripe()
-  const elements = useElements()
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [errorMessage, setErrorMessage] = useState<string | null>(null)
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault()
-    setIsLoading(true)
-    setErrorMessage(null)
-
-    if (!stripe || !elements) {
-      setErrorMessage("Stripe hasn't loaded yet. Please try again.")
-      setIsLoading(false)
-      return
-    }
-
-    const cardElement = elements.getElement(CardElement)
-
-    if (cardElement) {
-      try {
-        const { error, paymentMethod } = await stripe.createPaymentMethod({
-          type: 'card',
-          card: cardElement,
-        })
-
-        if (error) {
-          setErrorMessage(error.message || 'An unknown error occurred')
-        } else {
-          console.log('[PaymentMethod]', paymentMethod)
-          alert('Payment successful!')
-          router.push('/')
-        }
-      } catch (err) {
-        setErrorMessage('An unexpected error occurred. Please try again.')
-      }
-    }
-
-    setIsLoading(false)
+// Mock function for Circle API (replace with actual API call later)
+async function createCirclePayment(amount: number, destinationAddress: string): Promise<PaymentResult> {
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  return { 
+    success: true,
+    message: 'Payment processed successfully',
+    transactionHash: '0x' + Math.random().toString(36).substr(2, 32)
   }
-
-  return (
-    <form onSubmit={handleSubmit} className="mt-4">
-      <div className="mb-4">
-        <label htmlFor="card-element" className="block text-sm font-medium text-gray-700 mb-2">
-          Credit Card Information
-        </label>
-        <div className="border border-gray-300 rounded-md p-2">
-          <CardElement id="card-element" options={{style: {base: {fontSize: '16px'}}}} />
-        </div>
-      </div>
-      <div className="mb-4">
-        <p className="font-bold">Total Amount: ${totalAmount.toFixed(2)}</p>
-      </div>
-      {errorMessage && <p className="text-red-500 mb-4">{errorMessage}</p>}
-      <button
-        type="submit"
-        disabled={!stripe || isLoading}
-        className="w-full bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors disabled:bg-gray-400"
-      >
-        {isLoading ? 'Processing...' : `Pay $${totalAmount.toFixed(2)}`}
-      </button>
-    </form>
-  )
 }
 
-import { Dispensary } from '../types/dispensary'
+function StripeCheckoutForm({ totalAmount }: { totalAmount: number }) {
+  // ... (keep the existing StripeCheckoutForm implementation)
+}
 
 function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, dispensary: Dispensary }) {
   const router = useRouter()
@@ -137,15 +67,43 @@ function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, 
     }
 
     try {
-      const payment = await createCirclePayment(usdcAmount, dispensary.evmAddress)
-      console.log('[CirclePayment]', payment)
-      // Update dispensary balance
-      dispensary.balance += usdcAmount
-      alert('Crypto payment successful!')
-      router.push(`/confirmation?dispensaryId=${dispensary.id}&amount=${usdcAmount}`)
+      // Check if MetaMask is installed and connected
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.BrowserProvider(window.ethereum)
+        const signer = await provider.getSigner()
+        const userAddress = await signer.getAddress()
+
+        // Check if user has enough balance
+        const balance = await provider.getBalance(userAddress)
+        if (balance.lt(ethers.parseEther(usdcAmount.toString()))) {
+          throw new Error('Insufficient balance')
+        }
+
+        // Send transaction
+        const tx = await signer.sendTransaction({
+          to: dispensary.evmAddress,
+          value: ethers.parseEther(usdcAmount.toString())
+        })
+
+        // Wait for transaction to be mined
+        await tx.wait()
+
+        // Process payment through Circle
+        const circlePayment = await createCirclePayment(usdcAmount, dispensary.evmAddress)
+
+        if (circlePayment.success) {
+          // Update dispensary balance
+          dispensary.balance += usdcAmount
+          router.push(`/confirmation?dispensaryId=${dispensary.id}&amount=${usdcAmount}&txHash=${circlePayment.transactionHash}`)
+        } else {
+          throw new Error(circlePayment.message)
+        }
+      } else {
+        throw new Error('MetaMask is not installed')
+      }
     } catch (error) {
       console.error('Crypto payment failed:', error)
-      setErrorMessage('Crypto payment failed. Please try again.')
+      setErrorMessage(`Crypto payment failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
 
     setIsLoading(false)
