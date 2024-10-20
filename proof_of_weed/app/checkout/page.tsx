@@ -30,6 +30,8 @@ async function createCirclePayment(_amount: number, _destinationAddress: string)
     transactionHash: '0x' + Math.random().toString(36).substr(2, 32)
   }
 }
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _ = { _amount, _destinationAddress }; // Acknowledge unused variables
 
 function StripeCheckoutForm({ totalAmount }: { totalAmount: number }) {
   const stripe = useStripe();
