@@ -1,17 +1,18 @@
 'use client'
 
+// Import necessary dependencies from React and Next.js
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { ethers } from 'ethers'
 
-// Types
+// Define TypeScript types for our data structures
 type Dispensary = {
   id: number
   name: string
   address: string
   rating: number
-  evmAddress: string
+  evmAddress: string  // Ethereum Virtual Machine address
   balance: number
 }
 
@@ -27,7 +28,8 @@ type User = {
   balance: string | null
 }
 
-// Mock data
+// Mock data for dispensaries and products
+// In a real application, this would likely come from an API or database
 const dispensaries: Dispensary[] = [
   { id: 1, name: 'Green Leaf Dispensary', address: '123 Cannabis St, Springfield', rating: 4.5, evmAddress: '0x1234567890123456789012345678901234567890', balance: 1000 },
   { id: 2, name: 'Herbal Bliss Dispensary', address: '456 Green Way, Rivertown', rating: 4.7, evmAddress: '0x2345678901234567890123456789012345678901', balance: 1500 },
@@ -40,7 +42,8 @@ const products: Product[] = [
   { id: 3, name: "OG Kush", price: 18.00, image: "/placeholder.svg?height=200&width=200" },
 ]
 
-// Add this type definition at the top of your file, after the existing type definitions
+// Define a type for the Ethereum object injected by MetaMask
+// This extends the Window interface to include the ethereum property
 type EthereumWindow = Window & typeof globalThis & {
   ethereum?: {
     request: (args: { method: string }) => Promise<string[]>
@@ -48,6 +51,7 @@ type EthereumWindow = Window & typeof globalThis & {
 }
 
 export default function WeedHavenApp() {
+  // State hooks for managing component state
   const [selectedDispensary, setSelectedDispensary] = useState<Dispensary | null>(null)
   const [cart, setCart] = useState<Product[]>([])
   const [user, setUser] = useState<User>({ address: null, balance: null })
@@ -56,14 +60,19 @@ export default function WeedHavenApp() {
   const [isConnecting, setIsConnecting] = useState(false)
   const router = useRouter()
 
+  // Effect hook to check wallet connection on component mount
   useEffect(() => {
     const checkWalletConnection = async () => {
+      // Check if we're in a browser environment and MetaMask is available
       if (typeof window !== 'undefined' && 'ethereum' in window) {
         const ethereum = (window as EthereumWindow).ethereum;
         if (ethereum) {
+          // Create a new ethers provider
           const provider = new ethers.BrowserProvider(ethereum);
+          // Get the list of accounts
           const accounts = await provider.listAccounts();
           if (accounts.length > 0) {
+            // If there's at least one account, set the wallet and user state
             setWallet(provider);
             const signer = await provider.getSigner();
             const address = await signer.getAddress();
@@ -77,19 +86,24 @@ export default function WeedHavenApp() {
       }
     }
     checkWalletConnection()
-  }, [])
+  }, []) // Empty dependency array means this effect runs once on mount
+  // Function to connect the user's MetaMask wallet
   const connectWallet = async () => {
     if (typeof window !== 'undefined' && 'ethereum' in window) {
       try {
         setIsConnecting(true)
         const ethereum = (window as EthereumWindow).ethereum;
         if (ethereum) {
+          // Request account access
           await ethereum.request({ method: 'eth_requestAccounts' })
+          // Create a new ethers provider
           const provider = new ethers.BrowserProvider(ethereum)
           setWallet(provider)
+          // Get the signer, address, and balance
           const signer = await provider.getSigner()
           const address = await signer.getAddress()
           const balance = await provider.getBalance(address)
+          // Update the user state
           setUser({
             address: address,
             balance: `${ethers.formatEther(balance)} ETH`
@@ -105,22 +119,27 @@ export default function WeedHavenApp() {
     }
   }
 
+  // Function to disconnect the wallet
   const disconnectWallet = () => {
     setUser({ address: null, balance: null })
   }
 
+  // Function to add a product to the cart
   const addToCart = (product: Product) => {
     setCart([...cart, product])
   }
 
+  // Function to remove a product from the cart
   const removeFromCart = (productId: number) => {
     setCart(cart.filter(item => item.id !== productId))
   }
 
+  // Function to calculate the total price of items in the cart
   const getTotalPrice = () => {
     return cart.reduce((total, item) => total + item.price, 0)
   }
 
+  // Function to handle the checkout process
   const proceedToCheckout = () => {
     if (!user.address) {
       alert('Please connect your wallet before proceeding to checkout.')
@@ -131,15 +150,18 @@ export default function WeedHavenApp() {
       return
     }
     const totalPrice = getTotalPrice() + 2 // Add $2 fee
+    // Navigate to the checkout page with total price and user address as query parameters
     router.push(`/checkout?total=${totalPrice.toFixed(2)}&address=${user.address}`)
   }
 
   return (
     <div className="container mx-auto p-4">
+      {/* Header section */}
       <header className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold text-green-700">Proof of Weed</h1>
         <div>
           {user.address ? (
+            // If user is connected, show address, balance, and disconnect button
             <div className="flex items-center">
               <span className="mr-4">
                 Address: {user.address.slice(0, 6)}...{user.address.slice(-4)}
@@ -153,6 +175,7 @@ export default function WeedHavenApp() {
               </button>
             </div>
           ) : (
+            // If user is not connected, show connect button
             <button
               onClick={connectWallet}
               disabled={isConnecting}
@@ -164,8 +187,10 @@ export default function WeedHavenApp() {
         </div>
       </header>
 
+      {/* Main content */}
       <main>
         {selectedDispensary ? (
+          // If a dispensary is selected, show its products
           <div>
             <button
               onClick={() => setSelectedDispensary(null)}
@@ -191,6 +216,7 @@ export default function WeedHavenApp() {
             </div>
           </div>
         ) : (
+          // If no dispensary is selected, show the list of dispensaries
           <div>
             <h2 className="text-2xl font-bold mb-4">Nearby Dispensaries</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -212,6 +238,7 @@ export default function WeedHavenApp() {
         )}
       </main>
 
+      {/* Shopping cart */}
       {cart.length > 0 && (
         <div className="mt-8 p-4 bg-white border rounded shadow-lg">
           <h2 className="text-xl font-bold mb-4">Your Cart</h2>
@@ -229,6 +256,7 @@ export default function WeedHavenApp() {
               </div>
             </div>
           ))}
+          {/* Cart summary */}
           <div className="mt-4">
             <strong>Subtotal: ${getTotalPrice().toFixed(2)}</strong>
           </div>
