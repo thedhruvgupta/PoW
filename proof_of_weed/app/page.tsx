@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { ethers } from 'ethers'
+import { ethers, BrowserProvider } from 'ethers'
 import Header from './components/Header'
 import DispensaryList from './components/DispensaryList'
 import ProductList from './components/ProductList'
@@ -20,7 +20,7 @@ export default function WeedHavenApp() {
   const [selectedDispensary, setSelectedDispensary] = useState<Dispensary | null>(null)
   const [cart, setCart] = useState<Product[]>([])
   const [user, setUser] = useState<User>({ address: null, balance: null, flowBalance: null })
-  const [wallet, setWallet] = useState<ethers.BrowserProvider | null>(null)
+  const [wallet, setWallet] = useState<BrowserProvider | null>(null)
   const [isConnecting, setIsConnecting] = useState(false)
   const router = useRouter()
 
