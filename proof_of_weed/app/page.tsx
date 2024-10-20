@@ -30,7 +30,7 @@ export default function WeedHavenApp() {
         const ethereum = (window as EthereumWindow).ethereum;
         if (ethereum) {
           const provider = new ethers.BrowserProvider(ethereum);
-          const accounts = await provider.listAccounts();
+          const accounts = await ethereum.request({ method: 'eth_accounts' });
           if (accounts.length > 0) {
             setWallet(provider);
             const signer = await provider.getSigner();

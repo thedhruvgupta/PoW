@@ -68,8 +68,8 @@ function CryptoCheckoutForm({ totalAmount, dispensary }: { totalAmount: number, 
 
     try {
       // Check if MetaMask is installed and connected
-      if (typeof window.ethereum !== 'undefined') {
-        const provider = new ethers.BrowserProvider(window.ethereum)
+      if (typeof window !== 'undefined' && typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.BrowserProvider(window.ethereum as any)
         const signer = await provider.getSigner()
         const userAddress = await signer.getAddress()
 
