@@ -1,4 +1,5 @@
 import { Product } from '../types'
+import { X, ShoppingCart } from 'lucide-react'
 
 interface CartProps {
   cart: Product[]
@@ -9,36 +10,47 @@ interface CartProps {
 
 export default function Cart({ cart, removeFromCart, getTotalPrice, proceedToCheckout }: CartProps) {
   return (
-    <div className="mt-8 p-4 bg-white border rounded shadow-lg">
-      <h2 className="text-xl font-bold mb-4">Your Cart</h2>
-      {cart.map(item => (
-        <div key={item.id} className="flex justify-between items-center mb-2">
-          <span>{item.name}</span>
-          <div>
-            <span className="mr-2">${item.price.toFixed(2)}</span>
-            <button 
-              onClick={() => removeFromCart(item.id)}
-              className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors"
-            >
-              Remove
-            </button>
+    <div className="fixed bottom-4 right-4 w-80 bg-card text-card-foreground p-6 rounded-lg shadow-xl border border-border">
+      <h2 className="text-xl font-bold mb-4 flex items-center">
+        <ShoppingCart size={24} className="mr-2"/>
+        Your Cart
+      </h2>
+      <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+        {cart.map(item => (
+          <div key={item.id} className="flex justify-between items-center text-sm">
+            <span>{item.name}</span>
+            <div className="flex items-center space-x-2">
+              <span>${item.price.toFixed(2)}</span>
+              <button
+                onClick={() => removeFromCart(item.id)}
+                className="text-red-500 hover:text-red-700"
+              >
+                <X size={16} />
+              </button>
+            </div>
           </div>
+        ))}
+      </div>
+      <div className="mt-4 pt-4 border-t border-border">
+        <div className="flex justify-between text-sm">
+          <span>Subtotal</span>
+          <span>${getTotalPrice().toFixed(2)}</span>
         </div>
-      ))}
-      <div className="mt-4">
-        <strong>Subtotal: ${getTotalPrice().toFixed(2)}</strong>
-      </div>
-      <div className="mt-2">
-        <strong>Fee: $2.00</strong>
-      </div>
-      <div className="mt-2">
-        <strong>Total: ${(getTotalPrice() + 2).toFixed(2)}</strong>
+        <div className="flex justify-between text-sm mt-1">
+          <span>Fee</span>
+          <span>$2.00</span>
+        </div>
+        <div className="flex justify-between font-bold text-lg mt-2">
+          <span>Total</span>
+          <span>${(getTotalPrice() + 2).toFixed(2)}</span>
+        </div>
       </div>
       <button 
-        className="mt-4 bg-green-500 text-white px-4 py-2 rounded w-full hover:bg-green-600 transition-colors"
+        className="mt-4 w-full bg-primary text-white py-2 rounded-md flex items-center justify-center space-x-2 hover:bg-primary/90 transition-colors"
         onClick={proceedToCheckout}
       >
-        Proceed to Checkout
+        <ShoppingCart size={20} />
+        <span>Proceed to Checkout</span>
       </button>
     </div>
   )
